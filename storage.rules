@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Public read access for all files
+    match /{allPaths=**} {
+      allow read: if true;
+    }
+    
+    // Allow uploads to technician_applications (with size limit)
+    match /technician_applications/{filename} {
+      allow write: if request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+    
+    // Allow authenticated users to upload their own files
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Admin uploads
+    match /admin/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Product images
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
